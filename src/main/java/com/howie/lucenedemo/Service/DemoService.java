@@ -82,7 +82,8 @@ public class DemoService {
     }
 
     /**
-     * 增量更新索引
+     * 增量批量更新索引
+     *
      * @param documents 更新的文档
      * @throws IOException 更新过程中的IO异常
      */
@@ -102,50 +103,43 @@ public class DemoService {
 
     /**
      * 分页查询
-     * @param queryStr 匹配内容
-     * @param field 匹配字段
+     *
+     * @param queryStr   匹配内容
+     * @param field      匹配字段
      * @param pageNumber 页码
-     * @param pageSize 每页数量
+     * @param pageSize   每页数量
      * @return 文档结果集
      * @throws Exception 查询过程中的异常信息
      */
     public List<Document> searchDocuments(String queryStr, String field, int pageNumber,
                                           int pageSize) throws Exception {
-        lock.readLock().lock();
-        try {
-            // 创建搜索对象
-            Query query = new QueryParser(field, analyzer).parse(queryStr);
-            // 执行查询
-            TopDocs topDocs = searcher.search(query, pageNumber * pageSize);
-            // 计算起始和结束文档索引
-            return getDocuments(pageNumber, pageSize, topDocs);
-        } finally {
-            lock.readLock().unlock();
-        }
+        // 创建搜索对象
+        Query query = new QueryParser(field, analyzer).parse(queryStr);
+        // 执行查询
+        TopDocs topDocs = searcher.search(query, pageNumber * pageSize);
+        // 计算起始和结束文档索引
+        return getDocuments(pageNumber, pageSize, topDocs);
     }
 
     /**
      * 分页查询（排序）
-     * @param queryStr 匹配内容
-     * @param field 匹配字段
+     *
+     * @param queryStr   匹配内容
+     * @param field      匹配字段
      * @param pageNumber 页码
-     * @param pageSize 每页数量
+     * @param pageSize   每页数量
+     * @param sort       排序方式
      * @return 文档结果集
      * @throws Exception 查询过程中的异常信息
      */
     public List<Document> searchDocuments(String queryStr, String field, int pageNumber,
                                           int pageSize, Sort sort) throws Exception {
-        lock.readLock().lock();
-        try {
-            // 创建搜索对象
-            Query query = new QueryParser(field, analyzer).parse(queryStr);
-            // 执行查询
-            TopDocs topDocs = searcher.search(query, pageNumber * pageSize, sort);
-            // 计算起始和结束文档索引
-            return getDocuments(pageNumber, pageSize, topDocs);
-        } finally {
-            lock.readLock().unlock();
-        }
+        // 创建搜索对象
+        Query query = new QueryParser(field, analyzer).parse(queryStr);
+        // 执行查询
+        TopDocs topDocs = searcher.search(query, pageNumber * pageSize, sort);
+        // 计算起始和结束文档索引
+        return getDocuments(pageNumber, pageSize, topDocs);
     }
 
     private List<Document> getDocuments(int pageNumber, int pageSize, TopDocs topDocs) throws IOException {
@@ -163,70 +157,74 @@ public class DemoService {
 
     /**
      * 时间范围查询
-     * @param query 时间范围条件
+     *
+     * @param query      时间范围条件
      * @param pageNumber 页码
-     * @param pageSize 每页数量
+     * @param pageSize   每页数量
      * @return 文档结果集
      * @throws Exception 查询过程中的异常信息
      */
     public List<Document> searchDocuments(Query query, int pageNumber, int pageSize) throws Exception {
-        lock.readLock().lock();
-        try {
-            // 执行查询
-            TopDocs topDocs = searcher.search(query, pageNumber * pageSize);
-            // 计算起始和结束文档索引
-            return getDocuments(pageNumber, pageSize, topDocs);
-        } finally {
-            lock.readLock().unlock();
-        }
+
+        // 执行查询
+        TopDocs topDocs = searcher.search(query, pageNumber * pageSize);
+        // 计算起始和结束文档索引
+        return getDocuments(pageNumber, pageSize, topDocs);
+
     }
 
     /**
      * 多值匹配查询
-     * @param values 匹配内容
-     * @param field 匹配字段
+     *
+     * @param values     匹配内容
+     * @param field      匹配字段
      * @param pageNumber 页码
-     * @param pageSize 每页数量
+     * @param pageSize   每页数量
      * @return 文档结果集
      * @throws Exception 查询过程中的异常信息
      */
     public List<Document> searchDocuments(String[] values, String field, int pageNumber,
                                           int pageSize, Sort sort) throws Exception {
-        lock.readLock().lock();
-        try {
-            // 创建多值匹配对象
-            BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
-            for (String value : values) {
-                TermQuery termQuery = new TermQuery(new Term(field, value));
-                booleanQueryBuilder.add(termQuery, BooleanClause.Occur.SHOULD);
-            }
-            Query multiValueQuery = booleanQueryBuilder.build();
-            // 执行查询
-            TopDocs topDocs = searcher.search(multiValueQuery, pageNumber * pageSize, sort);
-            // 计算起始和结束文档索引
-            return getDocuments(pageNumber, pageSize, topDocs);
-        } finally {
-            lock.readLock().unlock();
+
+        // 创建多值匹配对象
+        BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
+        for (String value : values) {
+            TermQuery termQuery = new TermQuery(new Term(field, value));
+            booleanQueryBuilder.add(termQuery, BooleanClause.Occur.SHOULD);
         }
+        Query multiValueQuery = booleanQueryBuilder.build();
+        // 执行查询
+        TopDocs topDocs = searcher.search(multiValueQuery, pageNumber * pageSize, sort);
+        // 计算起始和结束文档索引
+        return getDocuments(pageNumber, pageSize, topDocs);
     }
 
     /**
      * 查询满足条件的文档数
-     * @param field 查询字段
+     *
+     * @param field    查询字段
      * @param queryStr 匹配内容
      * @return 符合条件的数量
      * @throws Exception 查询过程中的异常信息
      */
     public long countDocuments(String field, String queryStr) throws Exception {
-        lock.readLock().lock();
-        try {
-            Query query = new QueryParser(field, analyzer).parse(queryStr);
-            // 执行查询
-            TopDocs topDocs = searcher.search(query, Integer.MAX_VALUE);
-            return topDocs.totalHits.value;
-        } finally {
-            lock.readLock().unlock();
-        }
+
+        Query query = new QueryParser(field, analyzer).parse(queryStr);
+        // 使用仅关心数量的TotalHitCountCollector提高count性能
+        TotalHitCountCollector collector = new TotalHitCountCollector();
+        // 执行查询
+        searcher.search(query, collector);
+        return collector.getTotalHits();
+    }
+
+    /**
+     * 关闭资源
+     *
+     * @throws IOException IO异常信息
+     */
+    public void close() throws IOException {
+        writer.close();
+        reader.close();
     }
 
 }
